@@ -1,0 +1,2 @@
+parameters:
+  images_directory: "%kernel.project_dir%/public/images"

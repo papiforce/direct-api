@@ -1,0 +1,92 @@
+services:
+  ###> doctrine/doctrine-bundle ###
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: symfony
+    environment:
+      MERCURE_URL: ${MERCURE_URL:-http://mercure:80/.well-known/mercure}
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-http://localhost:3001/.well-known/mercure}
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-1da914c2fd5ae925e8d9d7fdc71d3ba55fcccb8b9e3e677b9a6ad884746cca6f}
+    links:
+      - database:database
+    volumes:
+      - .:/var/www/symfony:cached
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/app.ini:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      - database
+    networks:
+      - backend_api_network
+    command: php -S 0.0.0.0:8000 -t public/
+
+  mercure:
+    image: dunglas/mercure
+    container_name: mercure
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ":80"
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-1da914c2fd5ae925e8d9d7fdc71d3ba55fcccb8b9e3e677b9a6ad884746cca6f}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-1da914c2fd5ae925e8d9d7fdc71d3ba55fcccb8b9e3e677b9a6ad884746cca6f}
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+      MERCURE_EXTRA_DIRECTIVES: |
+        anonymous_subscription on
+        cors_origins http://localhost:3000
+    ports:
+      - "3001:80"
+    volumes:
+      - mercure_data:/data
+    networks:
+      - backend_api_network
+
+  database:
+    container_name: database
+    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB:-app}",
+          "-U",
+          "${POSTGRES_USER:-app}",
+        ]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - backend_api_network
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./docker/db/data:/var/lib/postgresql/data:rw
+
+  adminer:
+    image: adminer
+    restart: always
+    container_name: adminer
+    links:
+      - database:database
+    ports:
+      - "8080:8080"
+    networks:
+      - backend_api_network
+###< doctrine/doctrine-bundle ###
+
+networks:
+  backend_api_network:
+
+volumes:
+  ###> doctrine/doctrine-bundle ###
+  database_data:
+  ###< doctrine/doctrine-bundle ###
+  mercure_data:

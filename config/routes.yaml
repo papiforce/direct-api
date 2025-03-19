@@ -1,0 +1,52 @@
+controllers:
+  resource:
+    path: ../src/Controller/
+    namespace: App\Controller
+  type: attribute
+
+api_login_check:
+  path: /api/login_check
+
+api_users:
+  path: /api/users
+  controller: App\Controller\UserController::getUsers
+  methods: ["GET"]
+
+api_user_me:
+  path: /api/user/me
+  controller: App\Controller\UserController:getCurrentUser
+  methods: ["GET"]
+
+api_create_conversation:
+  path: /api/conversation/{recipient}
+  controller: App\Controller\ConversationController::createConversation
+  methods: ["POST"]
+
+api_conversation_messages:
+  path: /api/conversations/{conversationId}/messages
+  controller: App\Controller\MessageController::getConversationMessages
+  methods: ["GET"]
+
+api_message_toggle_like:
+  path: /api/message/{conversation}/{message}/toggle-like
+  controller: App\Controller\MessageController::toggleLike
+  methods: ["PUT"]
+
+api_send_message_image:
+  path: /api/message/image
+  controller: App\Controller\MessageController::sendMessageWithImage
+  methods: ["POST"]
+
+api_send_message:
+  path: /api/message
+  controller: App\Controller\MessageController::sendMessage
+  methods: ["POST"]
+
+api_get_mercure_token:
+  path: "/api/mercure/token"
+  controller: App\Controller\MercureController::getMercureToken
+
+api_platform:
+  resource: .
+  type: api_platform
+  prefix: /api
